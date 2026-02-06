@@ -4,7 +4,7 @@ import router from './router'
 import axios from 'axios'
 
 // Point to Laravel backend on port 8000
-axios.defaults.baseURL = 'http://127.0.0.1:8000/api'
+axios.defaults.baseURL = 'http://pzi152026.studenti.sum.ba/backend/api'
 
 const token = localStorage.getItem('token')
 if (token) {

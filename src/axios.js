@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Set base URL
-axios.defaults.baseURL = 'http://127.0.0.1:8000';
+axios.defaults.baseURL = 'http://pzi152026.studenti.sum.ba/backend';
 
 // Add token to every request
 axios.interceptors.request.use(
