@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with base URL
 const api = axios.create({
-  baseURL: 'http://pzi152026.studenti.sum.ba/api',
+  baseURL: 'http://pzi152026.studenti.sum.ba/backend/api',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
