@@ -33,7 +33,6 @@
       <aside class="sidebar" :class="{ 'mobile-open': sidebarOpen }">
         <div class="sidebar-header">
           <h3>MY GOALS</h3>
-          <button class="refresh-btn" @click="fetchGoals" title="Refresh goals">🔄</button>
           <button class="close-sidebar" @click="sidebarOpen = false">✕</button>
         </div>
         <div class="goals-list">
@@ -72,6 +71,13 @@
             <p class="welcome-text">Welcome back, <strong>{{ user.name }}</strong>! 🎯</p>
           </div>
 
+          <!-- Success Message (shown after goal is added) -->
+          <transition name="fade">
+            <div v-if="successMessage" class="success-message">
+              <span class="success-icon">✅</span>{{ successMessage }}
+            </div>
+          </transition>
+
           <!-- Stats Grid -->
           <div class="stats-grid">
             <div class="stat-card goals-card">
@@ -91,7 +97,6 @@
           <div class="meal-plans-section">
             <div class="section-header">
               <h2>📋 My Meal Plans</h2>
-              <button @click="fetchMealPlans" class="refresh-btn" title="Refresh plans">🔄</button>
             </div>
             
             <div v-if="mealPlans.length > 0" class="meal-plans-list">
@@ -221,6 +226,9 @@ export default {
       // meal plans from backend
       mealPlans: [],
 
+      // success message
+      successMessage: '',
+
       // layout
       mobileMenuOpen: false,
       sidebarOpen: false,
@@ -267,9 +275,12 @@ export default {
           activityLevel: this.newGoal.activityLevel
         })
         
-        alert('Goal added successfully! ✅')
-        await this.fetchGoals() // Refresh goals
+        await this.fetchGoals()
         this.cancelGoal()
+
+        // Show success message
+        this.successMessage = 'Goal added successfully!'
+        setTimeout(() => (this.successMessage = ''), 5000)
       } catch (err) {
         console.error('Error saving goal:', err)
         alert('Failed to save goal: ' + (err.response?.data?.message || err.message))
@@ -282,7 +293,7 @@ export default {
       try {
         await api.delete(`/goals/${goalId}`)
         alert('Goal deleted! ✅')
-        await this.fetchGoals() // Refresh goals
+        await this.fetchGoals() 
       } catch (err) {
         console.error('Error deleting goal:', err)
         alert('Failed to delete goal: ' + (err.response?.data?.message || err.message))
@@ -322,6 +333,23 @@ export default {
   }
 }
 </script>
+
+<style>
+/* Global styles - affects entire app */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%) !important;
+  min-height: 100vh;
+  width: 100%;
+}
+
+#app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+}
+</style>
 
 <style scoped>
 * {
@@ -453,11 +481,10 @@ export default {
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: 350px;
-  background: white;
+  background: transparent;
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-  height: fit-content;
+  height: 200vh;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
   display: flex;
@@ -478,31 +505,11 @@ export default {
 
 .sidebar-header h3 {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: black;
   font-weight: 700;
   letter-spacing: 1px;
   margin: 0;
   flex: 1;
-}
-
-.refresh-btn {
-  background: linear-gradient(135deg, #f18213 0%, #974f39 100%);
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.4rem;
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.refresh-btn:hover {
-  transform: rotate(180deg);
-  box-shadow: 0 4px 12px rgba(241, 130, 19, 0.3);
 }
 
 .close-sidebar {
@@ -652,10 +659,9 @@ export default {
 }
 
 .dashboard-content {
-  background: white;
+  background: transparent;
   border-radius: 16px;
   padding: 2.5rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   max-width: 900px;
   margin: 0 auto;
 }
@@ -682,6 +688,34 @@ export default {
 .welcome-text strong {
   color: #f18213;
   font-weight: 600;
+}
+
+/* ===== SUCCESS MESSAGE ===== */
+.success-message {
+  padding: 1rem 1.5rem;
+  background: #d4edda;
+  border: 2px solid #28a745;
+  border-radius: 12px;
+  color: #155724;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.success-icon {
+  font-size: 1.3rem;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 /* ===== STATS GRID ===== */
@@ -750,7 +784,7 @@ export default {
 }
 
 .meal-plan-card {
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+  background: transparent;
   border: 2px solid #e5e7eb;
   border-radius: 16px;
   padding: 1.75rem;

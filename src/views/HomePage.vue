@@ -1,5 +1,17 @@
 <template>
   <div class="app-container">
+    <!-- ================================ -->
+    <!-- AUTH NOTIFICATION TOAST -->
+    <!-- ================================ -->
+    <transition name="toast">
+      <div v-if="authNotification" class="auth-toast">
+        <span class="toast-icon">🔒</span>
+        <span class="toast-message">{{ authNotification }}</span>
+        <button class="toast-close" @click="authNotification = null">✕</button>
+        <div class="toast-progress"></div>
+      </div>
+    </transition>
+
     <!-- Top Navigation Bar (Consistent across all pages) -->
     <header class="top-nav">
       <div class="nav-container">
@@ -11,16 +23,10 @@
         </div>
         <nav class="nav-links" :class="{ 'mobile-open': mobileMenuOpen }">
           <router-link to="/" class="nav-link">HOME</router-link>
-          <router-link to="/dashboard" class="nav-link">PROFILE</router-link>
+          <a class="nav-link" @click.prevent="handleProfileClick">PROFILE</a>
           <router-link to="/contact" class="nav-link">CONTACT</router-link>
         </nav>
         <div class="nav-actions">
-          <button v-if="showLanding" class="nav-btn-login" @click="goToAuth('login')">
-            LOG IN
-          </button>
-          <button v-if="showLanding" class="nav-btn-signup" @click="goToAuth('register')">
-            SIGN UP
-          </button>
           <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">
             ☰
           </button>
@@ -114,13 +120,55 @@ export default {
     return {
       showLanding: true,
       activeTab: 'login',
-      mobileMenuOpen: false
+      mobileMenuOpen: false,
+      authNotification: null,
+      notificationTimer: null
     }
+  },
+  mounted() {
+    // Check if router redirected here with a notification query param
+    const notify = this.$route.query.notify
+
+    if (notify === 'nutritionist') {
+      this.showAuthNotification('Nutritionist is not logged in. Please log in to access the dashboard.')
+    } else if (notify === 'user') {
+      this.showAuthNotification('User is not logged in. Please log in to access your dashboard.')
+    }
+
+    // Clean up the query param from the URL without triggering navigation
+    if (notify) {
+      this.$router.replace({ path: '/', query: {} })
+    }
+
+  },
+  beforeUnmount() {
+    if (this.notificationTimer) clearTimeout(this.notificationTimer)
   },
   methods: {
     goToAuth(tab) {
       this.activeTab = tab
       this.showLanding = false
+    },
+    handleProfileClick() {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        this.showAuthNotification('User is not logged in. Please log in to access your dashboard.')
+      } else {
+        this.$router.push('/dashboard')
+      }
+    },
+    showAuthNotification(message) {
+      this.authNotification = message
+
+      // Clear any existing timer
+      if (this.notificationTimer) {
+        clearTimeout(this.notificationTimer)
+      }
+
+      // Auto-dismiss after 5 seconds
+      this.notificationTimer = setTimeout(() => {
+        this.authNotification = null
+      }, 5000)
     }
   }
 }
@@ -145,6 +193,99 @@ export default {
 }
 
 /* ================================ */
+/* AUTH NOTIFICATION TOAST */
+/* ================================ */
+.auth-toast {
+  position: fixed;
+  top: 100px; /* Just below the navbar */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: linear-gradient(135deg, #1a7a4a 0%, #25a460 100%);
+  color: white;
+  padding: 14px 20px 14px 18px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 340px;
+  max-width: 520px;
+  box-shadow:
+    0 8px 32px rgba(26, 122, 74, 0.35),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+
+.toast-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+  letter-spacing: 0.2px;
+}
+
+.toast-close {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.toast-close:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Animated progress bar that drains in 5s */
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 0 0 12px 12px;
+  animation: drainProgress 5s linear forwards;
+}
+
+@keyframes drainProgress {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
+
+/* Vue transition for the toast */
+.toast-enter-active {
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.toast-leave-active {
+  transition: all 0.3s ease-in;
+}
+.toast-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-16px) scale(0.92);
+}
+.toast-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px) scale(0.95);
+}
+
+/* ================================ */
 /* TOP NAVIGATION BAR - MATCHING UserDashboard */
 /* ================================ */
 .top-nav {
@@ -158,11 +299,11 @@ export default {
 }
 
 .nav-container {
-  padding: 1rem 2rem;
+  padding: 1.4rem 2.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
+  position: relative;
 }
 
 .logo-section {
@@ -196,15 +337,19 @@ export default {
 
 .nav-links {
   display: flex;
-  gap: 1.5rem;
+  gap: 2.2rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .nav-link {
   color: #555;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
   transition: color 0.3s ease;
+  cursor: pointer;
 }
 
 .nav-link:hover {
@@ -215,40 +360,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.nav-btn-login,
-.nav-btn-signup {
-  padding: 0.6rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
-
-.nav-btn-login {
-  background: #f0f0f0;
-  color: #666;
-}
-
-.nav-btn-login:hover {
-  background: #e0e0e0;
-  transform: translateY(-2px);
-}
-
-.nav-btn-signup {
-  background: linear-gradient(135deg, #974f39 0%, #ff6b35 100%);
-  color: white;
-}
-
-.nav-btn-signup:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(241, 130, 19, 0.4);
 }
 
 .mobile-menu-btn {
@@ -273,7 +384,7 @@ export default {
   height: 100vh;
   margin: 0;
   padding: 0;
-  padding-top: 72px; /* Height of navbar */
+  padding-top: 82px; /* Height of navbar */
 
   /* Background Image */
   background: url('@/assets/gym-background.jpg');
@@ -435,7 +546,7 @@ export default {
   left: 0;
   width: 100vw;
   height: 100vh;
-  padding-top: 72px; /* Height of navbar */
+  padding-top: 82px; /* Height of navbar */
   display: flex;
   margin: 0;
   overflow: hidden;
@@ -648,6 +759,12 @@ export default {
   .forms-wrapper {
     max-width: 100%;
     padding: 15px;
+  }
+
+  .auth-toast {
+    min-width: 280px;
+    max-width: calc(100vw - 32px);
+    font-size: 0.88rem;
   }
 }
 

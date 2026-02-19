@@ -51,10 +51,14 @@ router.beforeEach((to, from, next) => {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   if (to.meta.requiresAuth && !token) {
-    // Ako ruta zahtijeva autentikaciju a nema token
-    next('/')
+    // Not logged in at all — tell HomePage which role was attempted
+    if (to.meta.role === 'nutritionist') {
+      next({ path: '/', query: { notify: 'nutritionist' } })
+    } else {
+      next({ path: '/', query: { notify: 'user' } })
+    }
   } else if (to.meta.role && user.role !== to.meta.role) {
-    // Ako ruta zahtijeva specifičnu ulogu, a korisnik nema tu ulogu
+    // Logged in but wrong role
     next('/dashboard')
   } else {
     next()

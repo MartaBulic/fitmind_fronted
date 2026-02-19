@@ -1,153 +1,164 @@
 <template>
-  <div class="dashboard-wrapper">
+  <div class="app-container">
     <!-- Top Navigation Bar -->
     <header class="top-nav">
       <div class="nav-container">
         <div class="logo-section">
-          <div class="avatar"></div>
+          <div class="brand-logo">
+            <img src="@/assets/logo.png" alt="Fit&Mind Logo" />
+          </div>
           <span class="brand-name">Fit&Mind</span>
         </div>
+
+        <!-- NAV LINKS in padded box -->
         <nav class="nav-links" :class="{ 'mobile-open': mobileMenuOpen }">
           <router-link to="/" class="nav-link">HOME</router-link>
-          <router-link to="/nutritionist/dashboard" class="nav-link active">DASHBOARD</router-link>
+          <router-link to="/dashboard" class="nav-link">PROFILE</router-link>
           <router-link to="/contact" class="nav-link">CONTACT</router-link>
         </nav>
+
         <div class="nav-actions">
-          <input type="search" placeholder="Search..." class="search-input" />
           <button class="mobile-menu-btn" @click="mobileMenuOpen = !mobileMenuOpen">☰</button>
         </div>
       </div>
     </header>
 
-    <!-- Main Layout -->
-    <div class="main-layout">
-      <!-- Sidebar -->
-      <aside class="sidebar" :class="{ 'mobile-open': sidebarOpen }">
-        <div class="sidebar-header">
-          <h3>USERS & GOALS</h3>
-          <button class="refresh-btn" @click="fetchUsers" title="Refresh users">🔄</button>
-          <button class="close-sidebar" @click="sidebarOpen = false">✕</button>
-        </div>
-        <div class="goals-list">
-          <div v-for="u in users" :key="u.id" class="goal-item" :class="{ 'selected': u.id === selectedUserId }">
-            <div>
-              <strong>{{ u.name }}</strong>
-              <div v-if="u.goals && u.goals.length > 0" class="user-goals">
-                <ul>
-                  <li v-for="g in u.goals" :key="g.id">
-                    <span class="goal-badge">{{ g.goalType }}</span>
-                    <span class="goal-weight">{{ g.targetWeight }}kg</span>
-                  </li>
-                </ul>
+    <div class="dashboard-wrapper">
+      <!-- Main Layout -->
+      <div class="main-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" :class="{ 'mobile-open': sidebarOpen }">
+          <div class="sidebar-header">
+            <h3>USERS & GOALS</h3>
+            <button class="close-sidebar" @click="sidebarOpen = false">✕</button>
+          </div>
+          <div class="goals-list">
+            <div v-for="u in users" :key="u.id" class="goal-item" :class="{ 'selected': u.id === selectedUserId }">
+              <div>
+                <strong>{{ u.name }}</strong>
+                <div v-if="u.goals && u.goals.length > 0" class="user-goals">
+                  <ul>
+                    <li v-for="g in u.goals" :key="g.id">
+                      <span class="goal-badge">{{ g.goalType }}</span>
+                      <span class="goal-weight">{{ g.targetWeight }}kg</span>
+                    </li>
+                  </ul>
+                </div>
+                <div v-else class="no-goals">
+                  <em>No goals set</em>
+                </div>
               </div>
-              <div v-else class="no-goals">
-                <em>No goals set</em>
+            </div>
+            <div v-if="users.length === 0" class="empty-state">
+              <span class="empty-icon">👥</span>
+              <p>No users found</p>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content-area">
+          <button class="mobile-sidebar-toggle" @click="sidebarOpen = true">
+            <span>☰</span> Users & Goals
+          </button>
+          
+          <div class="dashboard-content">
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+              <div class="header-icon">🥗</div>
+              <h1>Nutritionist Dashboard</h1>
+              <center><p>Welcome back, <strong>{{ user.name }}</strong>! Manage your clients' nutrition plans.</p></center>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+              <div class="stat-card users-card">
+                <div class="stat-icon">👥</div>
+                <h3>{{ users.length }}</h3>
+                <p>Total Users</p>
+              </div>
+              <div class="stat-card plans-card">
+                <div class="stat-icon">📋</div>
+                <h3>{{ users.filter(u => u.goals && u.goals.length > 0).length }}</h3>
+                <p>Active Plans</p>
               </div>
             </div>
-          </div>
-          <div v-if="users.length === 0" class="empty-state">
-            <span class="empty-icon">👥</span>
-            <p>No users found</p>
-          </div>
-        </div>
-      </aside>
 
-      <!-- Main Content -->
-      <main class="content-area">
-        <button class="mobile-sidebar-toggle" @click="sidebarOpen = true">
-          <span>☰</span> Users & Goals
-        </button>
-        
-        <div class="dashboard-content">
-          <!-- Welcome Section -->
-          <div class="welcome-section">
-            <h1>Nutritionist Dashboard</h1>
-            <p class="welcome-text">Welcome back, <strong>{{ user.name }}</strong>! 🥗</p>
-          </div>
-
-          <!-- Stats Grid -->
-          <div class="stats-grid">
-            <div class="stat-card users-card">
-              <div class="stat-icon">👥</div>
-              <h3>{{ users.length }}</h3>
-              <p>Total Users</p>
-            </div>
-            <div class="stat-card plans-card">
-              <div class="stat-icon">📋</div>
-              <h3>{{ users.filter(u => u.goals && u.goals.length > 0).length }}</h3>
-              <p>Active Plans</p>
-            </div>
-          </div>
-
-          <!-- Nutrition Plan Card -->
-          <div class="meal-plan-section">
-            <div class="section-header">
-              <h2>📝 Create Nutrition Plan</h2>
-              <p>Select a user and create their personalized meal plan</p>
-            </div>
-
-            <div class="meal-plan-card">
-              <div class="form-group">
-                <label for="selectUser">
-                  <span class="label-icon">👤</span>
-                  Select User
-                </label>
-                <select id="selectUser" v-model="selectedUserId" @change="loadMealPlan" class="user-select">
-                  <option value="">-- Choose a user --</option>
-                  <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
-                </select>
+            <!-- Nutrition Plan Card -->
+            <div class="meal-plan-section">
+              <div class="section-title">
+                <h2>📝 Create Nutrition Plan</h2>
               </div>
 
-              <div v-if="selectedUserId" class="meal-plan-form">
-                <div class="selected-user-info" v-if="selectedUser">
-                  <div class="user-badge">
-                    <div class="user-avatar">{{ selectedUser.name.charAt(0) }}</div>
-                    <div>
-                      <p class="user-name">{{ selectedUser.name }}</p>
-                      <div v-if="selectedUser.goals && selectedUser.goals.length > 0" class="user-goals-inline">
-                        <span v-for="g in selectedUser.goals" :key="g.id" class="goal-tag">
-                          {{ g.goalType }} • {{ g.targetWeight }}kg
-                        </span>
+              <div class="meal-plan-card">
+                <div class="form-group">
+                  <label for="selectUser">
+                    <span class="label-icon">👤</span>
+                    Select User
+                  </label>
+                  <select id="selectUser" v-model="selectedUserId" @change="loadMealPlan" class="user-select">
+                    <option value="">-- Choose a user --</option>
+                    <option v-for="u in users" :key="u.id" :value="u.id">{{ u.name }}</option>
+                  </select>
+                </div>
+
+                <div v-if="selectedUserId" class="meal-plan-form">
+                  <div class="selected-user-info" v-if="selectedUser">
+                    <div class="user-badge">
+                      <div class="user-avatar">{{ selectedUser.name.charAt(0) }}</div>
+                      <div>
+                        <p class="user-name">{{ selectedUser.name }}</p>
+                        <div v-if="selectedUser.goals && selectedUser.goals.length > 0" class="user-goals-inline">
+                          <span v-for="g in selectedUser.goals" :key="g.id" class="goal-tag">
+                            {{ g.goalType }} • {{ g.targetWeight }}kg
+                          </span>
+                        </div>
+                        <p v-else class="no-goals-text">No goals set</p>
                       </div>
-                      <p v-else class="no-goals-text">No goals set</p>
                     </div>
                   </div>
+
+                  <div class="form-group">
+                    <label for="nutritionPlan">
+                      <span class="label-icon">🥗</span>
+                      Nutrition Plan
+                    </label>
+                    <textarea
+                      id="nutritionPlan"
+                      v-model="nutritionPlanLocal"
+                      class="nutrition-textarea"
+                      placeholder="Enter personalized nutrition plan..."
+                    ></textarea>
+                  </div>
+                  
+                  <button @click="saveNutritionPlan" class="submit-btn">
+                    <span class="btn-icon">💾</span>
+                    Save Nutrition Plan
+                  </button>
+
+                  <transition name="fade">
+                    <div v-if="successMessage" class="success-message">
+                      <span class="success-icon">✅</span>{{ successMessage }}
+                    </div>
+                  </transition>
                 </div>
 
-                <div class="form-group">
-                  <label for="nutritionPlan">
-                    <span class="label-icon">🥗</span>
-                    Nutrition Plan
-                  </label>
-                  <textarea
-                    id="nutritionPlan"
-                    v-model="nutritionPlanLocal"
-                    class="nutrition-textarea"
-                    placeholder="Enter personalized nutrition plan..."
-                  ></textarea>
+                <div v-else class="select-user-prompt">
+                  <div class="prompt-icon">👆</div>
+                  <p>Please select a user above to create or edit their nutrition plan</p>
                 </div>
-                
-                <button @click="saveNutritionPlan" class="btn-primary">
-                  <span class="btn-icon">💾</span>
-                  Save Nutrition Plan
-                </button>
-              </div>
-
-              <div v-else class="select-user-prompt">
-                <div class="prompt-icon">👆</div>
-                <p>Please select a user above to create or edit their nutrition plan</p>
               </div>
             </div>
-          </div>
 
-          <!-- Logout Button -->
-          <div class="logout-section">
-            <button @click="logout" class="logout-btn">
-              <span>🚪</span> Logout
-            </button>
+            <!-- Logout Button -->
+            <div class="logout-section">
+              <button @click="logout" class="logout-btn">
+                <span>🚪</span> Logout
+              </button>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   </div>
 </template>
@@ -165,7 +176,8 @@ export default {
       sidebarOpen: false,
       users: [],
       selectedUserId: '',
-      nutritionPlanLocal: '', // <-- lokalni model za textarea
+      nutritionPlanLocal: '',
+      successMessage: ''
     }
   },
   computed: {
@@ -200,7 +212,6 @@ export default {
         }
       } catch (err) {
         console.error('Error fetching users:', err)
-        alert('Failed to load users: ' + (err.response?.data?.message || err.message))
       }
     },
 
@@ -240,7 +251,8 @@ export default {
           notes: this.nutritionPlanLocal,
           goal_type: 'General'
         })
-        alert('✅ Nutrition plan saved successfully!')
+        this.successMessage = 'Nutrition plan saved successfully! We\'ll notify the client.'
+        setTimeout(() => (this.successMessage = ''), 5000)
         await this.loadMealPlan()
       } catch (err) {
         console.error('Error saving meal plan:', err)
@@ -251,7 +263,22 @@ export default {
 }
 </script>
 
+<style>
+/* Global styles - affects entire app */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%) !important;
+  min-height: 100vh;
+  width: 100%;
+}
 
+#app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+}
+</style>
 
 <style scoped>
 * {
@@ -260,29 +287,30 @@ export default {
   padding: 0;
 }
 
-.dashboard-wrapper {
+.app-container {
+  padding-top: 90px;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  background: transparent;
 }
 
 /* ===== TOP NAVIGATION ===== */
 .top-nav {
   background: white;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  position: sticky;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: fixed;
   top: 0;
-  z-index: 100;
-  border-bottom: 1px solid #e8ecf1;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 .nav-container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 1rem 2rem;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 2rem;
+  align-items: center;
+  padding: 1rem 2rem;
 }
 
 .logo-section {
@@ -291,75 +319,45 @@ export default {
   gap: 0.75rem;
 }
 
-.avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #974f39 0%, #f18213 100%);
-  box-shadow: 0 2px 8px rgba(241, 130, 19, 0.3);
+.brand-logo img {
+  height: 40px;
+  width: auto;
 }
 
 .brand-name {
+  font-size: 1.5rem;
   font-weight: 700;
-  font-size: 1.3rem;
   color: #2c3e50;
-  letter-spacing: -0.5px;
 }
 
+/* NAV LINKS in padded box */
 .nav-links {
   display: flex;
   gap: 2rem;
+  background: #f5f5f5;
+  padding: 0.5rem 1.5rem;
+  border-radius: 12px;
 }
 
 .nav-link {
   color: #6b7280;
   text-decoration: none;
   font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: 0.5px;
-  padding: 0.5rem 0;
-  position: relative;
-  transition: color 0.3s ease;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1rem;
 }
 
 .nav-link:hover,
-.nav-link.active {
+.nav-link.router-link-active {
   color: #f18213;
-}
-
-.nav-link.active::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #974f39, #f18213);
-  border-radius: 2px;
+  background: #fff3e0;
+  border-radius: 8px;
 }
 
 .nav-actions {
   display: flex;
-  align-items: center;
   gap: 1rem;
-}
-
-.search-input {
-  padding: 0.6rem 1.2rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 24px;
-  width: 200px;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  background: #f9fafb;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #f18213;
-  width: 260px;
-  background: white;
-  box-shadow: 0 2px 8px rgba(241, 130, 19, 0.15);
+  align-items: center;
 }
 
 .mobile-menu-btn {
@@ -368,8 +366,14 @@ export default {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  padding: 0.5rem;
   color: #2c3e50;
+}
+
+/* ===== DASHBOARD WRAPPER ===== */
+.dashboard-wrapper {
+  min-height: calc(100vh - 90px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  padding: 3rem 2rem 4rem;
 }
 
 /* ===== MAIN LAYOUT ===== */
@@ -378,22 +382,19 @@ export default {
   margin: 0 auto;
   display: flex;
   gap: 2rem;
-  padding: 2rem;
-  min-height: calc(100vh - 72px);
 }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
   width: 320px;
-  background: white;
+  background: transparent;
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   height: fit-content;
-  max-height: calc(100vh - 120px);
+  max-height: 200vh;
   overflow-y: auto;
   position: sticky;
-  top: 88px;
+  top: 50px;
 }
 
 .sidebar-header {
@@ -407,31 +408,11 @@ export default {
 
 .sidebar-header h3 {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: black;
   font-weight: 700;
   letter-spacing: 1px;
   margin: 0;
   flex: 1;
-}
-
-.refresh-btn {
-  background: linear-gradient(135deg, #f18213 0%, #974f39 100%);
-  border: none;
-  font-size: 1rem;
-  cursor: pointer;
-  padding: 0.4rem;
-  transition: all 0.3s ease;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.refresh-btn:hover {
-  transform: rotate(180deg);
-  box-shadow: 0 4px 12px rgba(241, 130, 19, 0.3);
 }
 
 .close-sidebar {
@@ -445,7 +426,7 @@ export default {
 }
 
 .goal-item {
-  padding: 1rem;
+  padding: 10rem;
   border-radius: 12px;
   background: #f9fafb;
   border: 2px solid transparent;
@@ -532,34 +513,58 @@ export default {
 }
 
 .dashboard-content {
-  background: white;
+  background: transparent;
   border-radius: 16px;
   padding: 2.5rem;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   max-width: 900px;
   margin: 0 auto;
 }
 
+/* ===== WELCOME SECTION (matches contact header) ===== */
 .welcome-section {
   text-align: center;
-  margin-bottom: 2.5rem;
-  padding-bottom: 2rem;
-  border-bottom: 2px solid #f3f4f6;
+  margin-bottom: 3rem;
+  padding: 2rem 1rem;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.dashboard-content h1 {
-  font-size: 2.2rem;
+.header-icon {
+  font-size: 4.5rem;
+  margin-bottom: 1.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.welcome-section h1 {
+  font-size: 3rem;
   color: #2c3e50;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   font-weight: 700;
+  background: linear-gradient(135deg, #974f39 0%, #f18213 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.welcome-text {
+.welcome-section p {
   color: #6b7280;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  max-width: 700px;
+  margin: 0 auto;
+  line-height: 1.8;
+  text-align: center;
 }
 
-.welcome-text strong {
+.welcome-section strong {
   color: #f18213;
   font-weight: 600;
 }
@@ -568,22 +573,23 @@ export default {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 2.5rem;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
 }
 
 .stat-card {
-  background: linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%);
-  padding: 1.75rem;
+  background: transparent;
+  padding: 1.5rem;
   border-radius: 16px;
   text-align: center;
-  border: 2px solid #ffe0d1;
+  border: 2px solid #e5e7eb;
   transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(241, 130, 19, 0.2);
+  background: #f3f4f6;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
@@ -610,59 +616,51 @@ export default {
   margin-bottom: 2rem;
 }
 
-.section-header {
-  text-align: center;
+.section-title {
   margin-bottom: 2rem;
 }
 
-.section-header h2 {
-  font-size: 1.6rem;
+.section-title h2 {
+  font-size: 1.8rem;
   color: #2c3e50;
-  margin-bottom: 0.5rem;
   font-weight: 700;
 }
 
-.section-header p {
-  color: #6b7280;
-  font-size: 0.95rem;
-}
-
 .meal-plan-card {
-  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
-  padding: 2rem;
+  background: transparent;
+  padding: 2.5rem;
   border-radius: 16px;
-  border: 2px solid #e5e7eb;
 }
 
 .form-group {
   margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .form-group label {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  color: #2c3e50;
-  font-weight: 600;
-  font-size: 0.95rem;
 }
 
 .label-icon {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
 }
 
 .user-select {
-  width: 100%;
-  padding: 0.9rem 1.2rem;
-  border-radius: 12px;
+  padding: 1rem 1.25rem;
   border: 2px solid #e5e7eb;
+  border-radius: 12px;
   font-size: 1rem;
-  background: white;
-  cursor: pointer;
   transition: all 0.3s ease;
-  font-weight: 500;
-  color: #2c3e50;
+  font-family: inherit;
+  background: #f9fafb;
+  cursor: pointer;
 }
 
 .user-select:focus {
@@ -729,18 +727,14 @@ export default {
 }
 
 .nutrition-textarea {
-  width: 100%;
-  min-height: 220px;
-  padding: 1rem;
-  border-radius: 12px;
+  padding: 1rem 1.25rem;
   border: 2px solid #e5e7eb;
-  resize: vertical;
-  font-size: 0.95rem;
-  color: #2c3e50;
-  background: white;
-  font-family: inherit;
-  line-height: 1.6;
+  border-radius: 12px;
+  font-size: 1rem;
   transition: all 0.3s ease;
+  font-family: inherit;
+  min-height: 200px;
+  resize: vertical;
 }
 
 .nutrition-textarea:focus {
@@ -749,35 +743,57 @@ export default {
   box-shadow: 0 0 0 3px rgba(241, 130, 19, 0.1);
 }
 
-.nutrition-textarea::placeholder {
-  color: #9ca3af;
-}
-
-.btn-primary {
-  width: 100%;
-  padding: 1rem 1.5rem;
+.submit-btn {
+  padding: 1rem 2rem;
   background: linear-gradient(135deg, #974f39 0%, #f18213 100%);
   color: white;
   border: none;
   border-radius: 12px;
-  font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
-.btn-primary:hover {
+.submit-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(241, 130, 19, 0.4);
+  box-shadow: 0 8px 20px rgba(241, 130, 19, 0.3);
 }
 
 .btn-icon {
   font-size: 1.2rem;
+}
+
+.success-message {
+  padding: 1rem 1.5rem;
+  background: #d4edda;
+  border: 2px solid #28a745;
+  border-radius: 12px;
+  color: #155724;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+.success-icon {
+  font-size: 1.3rem;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 .select-user-prompt {
@@ -806,6 +822,7 @@ export default {
 .logout-section {
   text-align: center;
   padding-top: 2rem;
+  margin-top: 2rem;
   border-top: 2px solid #f3f4f6;
 }
 
@@ -831,38 +848,49 @@ export default {
 
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 968px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    position: static;
+    max-height: none;
+  }
+
+  .welcome-section h1 {
+    font-size: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-container {
+    padding: 1rem;
+  }
+
   .nav-links {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    height: 100vh;
-    width: 280px;
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     background: white;
     flex-direction: column;
-    padding: 4rem 2rem;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-    transition: right 0.3s ease;
-    z-index: 999;
+    padding: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    gap: 0.5rem;
   }
 
   .nav-links.mobile-open {
-    right: 0;
+    display: flex;
   }
 
   .mobile-menu-btn {
     display: block;
   }
 
-  .search-input {
-    width: 160px;
-  }
-
-  .search-input:focus {
-    width: 180px;
-  }
-
-  .main-layout {
-    padding: 1rem;
+  .dashboard-wrapper {
+    padding: 2rem 1rem 3rem;
   }
 
   .sidebar {
@@ -890,11 +918,6 @@ export default {
     cursor: pointer;
     color: #6b7280;
     padding: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 
   .mobile-sidebar-toggle {
@@ -915,45 +938,67 @@ export default {
   }
 
   .dashboard-content {
-    padding: 1.5rem;
+    padding: 1.75rem;
   }
 
-  .dashboard-content h1 {
-    font-size: 1.8rem;
+  .welcome-section h1 {
+    font-size: 2rem;
+  }
+
+  .welcome-section p {
+    font-size: 1rem;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
   }
+
+  .meal-plan-card {
+    padding: 1.75rem;
+  }
+
+  .section-title h2 {
+    font-size: 1.5rem;
+  }
 }
 
 @media (max-width: 480px) {
-  .nav-container {
-    padding: 0.75rem 1rem;
+  .app-container {
+    padding-top: 70px;
   }
 
   .brand-name {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
   }
 
-  .search-input {
-    display: none;
+  .dashboard-wrapper {
+    padding: 1.5rem 0.75rem 2rem;
   }
 
   .dashboard-content {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
 
-  .dashboard-content h1 {
-    font-size: 1.5rem;
+  .header-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
   }
 
-  .section-header h2 {
-    font-size: 1.3rem;
+  .welcome-section h1 {
+    font-size: 1.75rem;
   }
-  
+
+  .welcome-section p {
+    font-size: 0.95rem;
+  }
+
   .meal-plan-card {
     padding: 1.5rem;
+  }
+
+  .submit-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
   }
 }
 </style>
